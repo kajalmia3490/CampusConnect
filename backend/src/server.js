@@ -59,14 +59,26 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Root fallback
-app.get('/', (req, res) => {
-  res.send('CampusConnect Backend API (Node.js + MS SQL Server) is running.');
-});
+// Serve React Native Web frontend if built
+const path = require('path');
+const distPath = path.join(__dirname, '../../mobile/dist');
+const fs = require('fs');
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: `Route ${req.method} ${req.url} not found` });
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send('CampusConnect Backend API (Node.js + MS SQL Server) is running.');
+  });
+}
+
+// 404 handler for API routes
+app.use('/api', (req, res) => {
+  res.status(404).json({ success: false, message: `API endpoint ${req.method} ${req.url} not found` });
 });
 
 // Global error handler
