@@ -3,11 +3,16 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal,
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS } from '../theme/theme';
 import { useAuth, DEMO_ACCOUNTS } from '../context/AuthContext';
-import { api } from '../services/api';
+import { api, getBaseUrl, setCustomApiUrl } from '../services/api';
 import { StatusBadge } from '../components/StatusBadge';
 
 export const ProfileScreen = () => {
   const { user, logout, quickLogin } = useAuth();
+
+  // Server API URL Modal
+  const [serverModalVisible, setServerModalVisible] = useState(false);
+  const [apiUrlInput, setApiUrlInput] = useState(getBaseUrl());
+  const [currentUrl, setCurrentUrl] = useState(getBaseUrl());
 
   // Change Password Modal
   const [pwdModalVisible, setPwdModalVisible] = useState(false);
@@ -45,6 +50,13 @@ export const ProfileScreen = () => {
     } finally {
       setIsChangingPwd(false);
     }
+  };
+
+  const handleSaveApiUrl = () => {
+    setCustomApiUrl(apiUrlInput);
+    setCurrentUrl(getBaseUrl());
+    setServerModalVisible(false);
+    Alert.alert('Backend Updated', `API endpoint set to:\n${getBaseUrl()}`);
   };
 
   const initials = user?.full_name ? user.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'CC';
@@ -138,6 +150,17 @@ export const ProfileScreen = () => {
       <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>Security & Preferences</Text>
 
+        <TouchableOpacity style={styles.menuItem} onPress={() => { setApiUrlInput(getBaseUrl()); setServerModalVisible(true); }}>
+          <View style={styles.menuLeft}>
+            <Ionicons name="server-outline" size={20} color={COLORS.primary} />
+            <View>
+              <Text style={styles.menuText}>Backend Server URL</Text>
+              <Text style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>{currentUrl}</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.menuItem} onPress={() => setPwdModalVisible(true)}>
           <View style={styles.menuLeft}>
             <Ionicons name="key-outline" size={20} color={COLORS.textPrimary} />
@@ -209,6 +232,49 @@ export const ProfileScreen = () => {
               ) : (
                 <Text style={styles.pwdSubmitText}>Change Password</Text>
               )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Backend Server URL Modal */}
+      <Modal visible={serverModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Backend Server URL</Text>
+              <TouchableOpacity onPress={() => setServerModalVisible(false)}>
+                <Ionicons name="close" size={24} color={COLORS.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.inputLabel, { marginTop: 4 }]}>API Base URL (e.g. Render, Tunnel, or Local):</Text>
+            <TextInput
+              style={styles.formInput}
+              placeholder="https://your-backend.onrender.com/api"
+              value={apiUrlInput}
+              onChangeText={setApiUrlInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <View style={{ flexDirection: 'row', gap: 8, marginVertical: 8 }}>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#EFF6FF', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                onPress={() => setApiUrlInput('https://bright-toys-glow.loca.lt/api')}
+              >
+                <Text style={{ fontSize: 11, color: COLORS.primary, fontWeight: '600' }}>Use Live Tunnel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#F3F4F6', padding: 8, borderRadius: 6, alignItems: 'center' }}
+                onPress={() => setApiUrlInput('http://localhost:5000/api')}
+              >
+                <Text style={{ fontSize: 11, color: COLORS.textSecondary, fontWeight: '600' }}>Localhost</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={[styles.pwdSubmitBtn, { marginTop: 12 }]} onPress={handleSaveApiUrl}>
+              <Text style={styles.pwdSubmitText}>Save & Apply</Text>
             </TouchableOpacity>
           </View>
         </View>

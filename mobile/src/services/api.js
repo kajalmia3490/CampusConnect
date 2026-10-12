@@ -4,13 +4,24 @@ import { Platform } from 'react-native';
 let customApiUrl = null;
 
 export const setCustomApiUrl = (url) => {
-  customApiUrl = url;
+  customApiUrl = url ? url.trim().replace(/\/+$/, '') : null;
+  if (typeof window !== 'undefined' && window.localStorage) {
+    if (customApiUrl) {
+      window.localStorage.setItem('CAMPUS_CONNECT_API_URL', customApiUrl);
+    } else {
+      window.localStorage.removeItem('CAMPUS_CONNECT_API_URL');
+    }
+  }
 };
 
-const getBaseUrl = () => {
+export const getBaseUrl = () => {
   if (customApiUrl) return customApiUrl;
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const saved = window.localStorage.getItem('CAMPUS_CONNECT_API_URL');
+    if (saved) return saved;
+  }
   if (process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL;
+    return process.env.EXPO_PUBLIC_API_URL.replace(/\/+$/, '');
   }
   if (typeof window !== 'undefined' && window.location && window.location.hostname) {
     const host = window.location.hostname;
@@ -35,7 +46,8 @@ export const setAuthToken = (token) => {
 export const getAuthToken = () => authToken;
 
 const request = async (endpoint, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const currentBaseUrl = getBaseUrl();
+  const url = `${currentBaseUrl}${endpoint}`;
   const headers = {
     'Content-Type': 'application/json',
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
@@ -48,13 +60,25 @@ const request = async (endpoint, options = {}) => {
       headers,
     });
 
-    const data = await res.json();
+    const contentType = res.headers.get('content-type') || '';
+    let data = {};
+    if (contentType.includes('application/json')) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (parseErr) {
+        throw new Error(`API endpoint ${endpoint} returned non-JSON response (${res.status}). Ensure backend is running or set EXPO_PUBLIC_API_URL.`);
+      }
+    }
+
     if (!res.ok) {
       throw new Error(data.message || `HTTP error ${res.status}`);
     }
     return data;
   } catch (err) {
-    console.error(`API Error [${endpoint}]:`, err.message);
+    console.warn(`API Error [${endpoint}]:`, err.message);
     throw err;
   }
 };

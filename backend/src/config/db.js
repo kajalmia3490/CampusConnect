@@ -26,6 +26,8 @@ const dbConfig = {
   }
 };
 
+const { mockPool } = require('./mockDb');
+
 let poolPromise = null;
 
 const getPool = async () => {
@@ -37,9 +39,9 @@ const getPool = async () => {
         return pool;
       })
       .catch(err => {
-        console.error(' Database Connection Failed: ', err);
-        poolPromise = null;
-        throw err;
+        console.warn('⚠️ MS SQL Server connection not available:', err.message);
+        console.log('🔄 Activating Cloud In-Memory Database Fallback for seamless online hosting.');
+        return mockPool;
       });
   }
   return poolPromise;

@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: campusconnect-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_SERVER
+        value: 127.0.0.1
+      - key: DB_USER
+        value: campus_admin
+      - key: DB_PASSWORD
+        value: CampusConnect2026!
+      - key: DB_NAME
+        value: CampusConnectDB
