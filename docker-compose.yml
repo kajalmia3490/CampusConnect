@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # Microsoft SQL Server Cloud Container
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: campusconnect_mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "CampusConnect2026!"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    restart: always
+
+  # Node.js + Express Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: campusconnect_api
+    environment:
+      PORT: 5000
+      DB_USER: sa
+      DB_PASSWORD: "CampusConnect2026!"
+      DB_SERVER: database
+      DB_NAME: CampusConnectDB
+      DB_PORT: 1433
+      DB_ENCRYPT: "false"
+      DB_TRUST_CERT: "true"
+      JWT_SECRET: "campus_connect_jwt_secret_key_sdp03_bubt_2026!"
+    ports:
+      - "5000:5000"
+    depends_on:
+      - database
+    restart: always
+
+volumes:
+  mssql_data:
