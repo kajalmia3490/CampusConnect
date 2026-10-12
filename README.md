@@ -19,6 +19,11 @@
 
 ---
 
+run command: 
+kajal@SERVER MINGW64 /d/Development/University Projects/SDP 03/CampusConnect
+$ cd "d:\Development\University Projects\SDP 03\CampusConnect\mobile"
+npx expo start
+
 ## 📁 Repository Structure
 
 ```
